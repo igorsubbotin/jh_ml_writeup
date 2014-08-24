@@ -23,7 +23,7 @@ Loading provided data from training dataset
 ```{r raw_data_collection, results='hide'}
 sourceData <- read.csv("pml-training.csv",header=TRUE,na.strings = c("NA",""))
 ```
-Dataset contains `r dim(sourceTraining)[1]` rows
+Dataset contains `r dim(sourceData)[1]` rows
 
 ### Preprocessing
 Remove all data with new_window="yes". Then remove first 7 features and remove all columns that contains only NAs
@@ -46,16 +46,16 @@ testing <- data[-inTrain,]
 Training dataset contains `r dim(training)[1]` rows and testing dataset contains `r dim(testing)[1]` rows
 
 ### Training
-In training we use "Random forest" machine learning algorithms and "Caret" package implementation of it
+In training we use "Random forest" machine learning algorithms and "Caret" package implementation of it. We are using trainControl() function to use cross-validation with k-folds (n=4) and enabling parallel execution for better performance.
 ```{r training, results='hide'}
-trControl = trainControl(method = "cv", number = 4, allowParallel = TRUE,verboseIter = TRUE)
+trControl = trainControl(method = "cv", number = 4, allowParallel = TRUE,verboseIter = FALSE)
 modFit <- train(classe~.,data=training,method="rf",trControl=trControl)
 ```
 
 ### Results
 Checking our prediction model on testing dataset
-```{r results}
+```{r results, results='hide'}
 pred <- predict(modFit,newdata=testing)
-confusionMatrix(testing$classe,pred)
+cm <- confusionMatrix(testing$classe,pred)
 ```
-We can see that prediction accuracy is 
+We can see that results are very good because accuracy level is equal to `r cm$overall["Accuracy"]`

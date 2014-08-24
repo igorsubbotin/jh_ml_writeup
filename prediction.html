@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -70,15 +70,15 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <div id="raw-data-collection" class="section level3">
 <h3>Raw Data Collection</h3>
 <p>Loading provided data from training dataset</p>
-<pre class="r"><code>sourceTraining &lt;- read.csv(&quot;pml-training.csv&quot;,header=TRUE,na.strings = c(&quot;NA&quot;,&quot;&quot;))</code></pre>
+<pre class="r"><code>sourceData &lt;- read.csv(&quot;pml-training.csv&quot;,header=TRUE,na.strings = c(&quot;NA&quot;,&quot;&quot;))</code></pre>
 <p>Dataset contains 19622 rows</p>
 </div>
 <div id="preprocessing" class="section level3">
 <h3>Preprocessing</h3>
 <p>Remove all data with new_window=“yes”. Then remove first 7 features and remove all columns that contains only NAs</p>
-<pre class="r"><code>data &lt;- sourceTraining
+<pre class="r"><code>data &lt;- sourceData
 data &lt;- subset(data, new_window==&quot;no&quot;)
-data &lt;- data[,8:length(names(sourceTraining))]
+data &lt;- data[,8:length(names(sourceData))]
 data &lt;- data[,colSums(is.na(data)) != nrow(data)]</code></pre>
 <p>After that we have 19216 rows and 52 features in our dataset after preprocessing phase</p>
 </div>
@@ -86,13 +86,23 @@ data &lt;- data[,colSums(is.na(data)) != nrow(data)]</code></pre>
 <h3>Sampling</h3>
 <p>Now we create two datasets: training and testing</p>
 <pre class="r"><code>library(caret)</code></pre>
-<pre><code>## Warning: package 'caret' was built under R version 3.1.1</code></pre>
-<pre><code>## Loading required package: lattice
-## Loading required package: ggplot2</code></pre>
 <pre class="r"><code>inTrain &lt;- createDataPartition(y=data$classe,p=0.7,list=FALSE)
 training &lt;- data[inTrain,]
 testing &lt;- data[-inTrain,]</code></pre>
 <p>Training dataset contains 13453 rows and testing dataset contains 5763 rows</p>
+</div>
+<div id="training" class="section level3">
+<h3>Training</h3>
+<p>In training we use “Random forest” machine learning algorithms and “Caret” package implementation of it. We are using trainControl() function to use cross-validation with k-folds (n=4) and enabling parallel execution for better performance.</p>
+<pre class="r"><code>trControl = trainControl(method = &quot;cv&quot;, number = 4, allowParallel = TRUE,verboseIter = FALSE)
+modFit &lt;- train(classe~.,data=training,method=&quot;rf&quot;,trControl=trControl)</code></pre>
+</div>
+<div id="results" class="section level3">
+<h3>Results</h3>
+<p>Checking our prediction model on testing dataset</p>
+<pre class="r"><code>pred &lt;- predict(modFit,newdata=testing)
+cm &lt;- confusionMatrix(testing$classe,pred)</code></pre>
+<p>We can see that results are very good because accuracy level is equal to 0.9932</p>
 </div>
 </div>
 
