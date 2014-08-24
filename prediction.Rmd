@@ -1,0 +1,61 @@
+---
+title: "Prediction Assignment Writeup"
+author: "Igor Subbotin"
+output: html_document
+---
+
+Background
+--------------------------------------------------------
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset). 
+
+Data
+--------------------------------------------------------
+The training data for this project are available here:
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>  
+The test data are available here:
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>  
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment. 
+
+Prediction
+---------------------------------------------------
+### Raw Data Collection
+Loading provided data from training dataset
+```{r raw_data_collection, results='hide'}
+sourceData <- read.csv("pml-training.csv",header=TRUE,na.strings = c("NA",""))
+```
+Dataset contains `r dim(sourceTraining)[1]` rows
+
+### Preprocessing
+Remove all data with new_window="yes". Then remove first 7 features and remove all columns that contains only NAs
+```{r preprocessing, results='hide'}
+data <- sourceData
+data <- subset(data, new_window=="no")
+data <- data[,8:length(names(sourceData))]
+data <- data[,colSums(is.na(data)) != nrow(data)]
+```
+After that we have `r dim(data)[1]` rows and `r dim(data)[2]-1` features in our dataset after preprocessing phase
+
+### Sampling
+Now we create two datasets: training and testing
+```{r sampling, results='hide'}
+library(caret)
+inTrain <- createDataPartition(y=data$classe,p=0.7,list=FALSE)
+training <- data[inTrain,]
+testing <- data[-inTrain,]
+```
+Training dataset contains `r dim(training)[1]` rows and testing dataset contains `r dim(testing)[1]` rows
+
+### Training
+In training we use "Random forest" machine learning algorithms and "Caret" package implementation of it
+```{r training, results='hide'}
+trControl = trainControl(method = "cv", number = 4, allowParallel = TRUE,verboseIter = TRUE)
+modFit <- train(classe~.,data=training,method="rf",trControl=trControl)
+```
+
+### Results
+Checking our prediction model on testing dataset
+```{r results}
+pred <- predict(modFit,newdata=testing)
+confusionMatrix(testing$classe,pred)
+```
+We can see that prediction accuracy is 
